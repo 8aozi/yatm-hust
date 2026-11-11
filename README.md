@@ -1,7 +1,7 @@
 # yatm-hust 「 微助教终端助手」
 
+>特点：**自给自足**，无需好友拍照协助
 >本内容为yatm的改编，如遇版权问题请联系我删除
->**自给自足**，无需好友拍照协助
 >致谢原作者   https://github.com/ManiaciaChao/yatm
 >以及一级来源  https://github.com/recolic/awesome-hust
 
