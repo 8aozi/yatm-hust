@@ -22,19 +22,30 @@
 | Mac | [01-macos/](01-macos/) | `start.command` | `Command+V`+回车 |
 | Windows | [02-windows/](02-windows/) | `start.cmd` | `Ctrl+V`+回车 |
 
-以下文件均在对应平台文件夹中
+以下文件均在**下载并解压后的**对应平台文件夹中；请保留完整项目目录。
 
-## 1. 首次安装
-> 已安装直接跳 「2.日常启动」
+## 1. 首次下载与安装
 
-1. 安装 [Node.js 22 或 24 LTS](https://nodejs.org/)，安装并登录电脑微信。
-2. 双击 `setup` 文件，等待显示 `Setup complete`；报错时按提示处理后重试。
+已安装可跳到「2. 日常启动」。无需安装 Git。
 
+1. 在[仓库首页](https://github.com/8aozi/yatm-hust)点击绿色 **Code → Download ZIP**，或[直接下载 ZIP](https://github.com/8aozi/yatm-hust/archive/refs/heads/main.zip)。
+2. **先完整解压**，打开 `yatm-hust-main` 文件夹（其中应能看到 `README.md`、`package.json` 和两个平台文件夹）。不要在压缩包内运行，也不要只下载单个启动文件。
+3. 安装 [Node.js 22 或 24 LTS](https://nodejs.org/)，安装并登录电脑微信。
+4. 按系统打开文件夹并双击安装文件：
+
+   | 平台 | 安装文件 | 完成标志 |
+   | --- | --- | --- |
+   | Mac | `01-macos/setup.command` | 终端显示 `Setup complete` |
+   | Windows | `02-windows/setup.cmd` | 终端显示 `Setup complete` |
+
+   安装需要联网。显示错误时按提示处理，再运行安装文件；成功后关闭安装窗口。
+
+若 Mac 提示 `.command` 没有执行权限：打开终端，输入 `cd `（末尾留空格），将解压后的项目文件夹拖入终端并回车，再运行 `chmod +x 01-macos/*.command`，然后重试。
 
 ## 2. 日常启动
 
-1. 双击 `start` 文件
-2. 选择地点：输入地点编号并回车。直接回车沿用上次选择；没有预设时按提示创建。
+1. 打开解压后的项目：Mac 双击 `01-macos/start.command`，Windows 双击 `02-windows/start.cmd`。日常使用无需重复运行 `setup`。
+2. 首次运行按提示输入地点名称、纬度和经度，程序自动生成 `config.json`。以后输入地点编号并回车；直接回车沿用上次选择。
 3. 复制链接：在电脑微信打开「微助教服务号 → 学生 → 签到」，复制带 `openid` 参数的页面链接（[获取方法](docs/AcquireOpenID.md)）。
 4. 终端输入：粘贴完整链接（含 32 位 openId），**回车**。验证成功后显示姓名和完整 ID，开始查询签到。
 5. 验证中：静默查询，仅失败或超时才报错 。
@@ -62,14 +73,14 @@
 
 双击 `manage-locations` 文件，按菜单新增、修改、删除或设为默认，输入 `0` 返回。修改立即保存到 `config.json`；下次启动选择地点后生效。运行中换地点需先退出再启动。
 
-本机预设：**1 西十二教学楼 · 2 计算机大楼 · 3 东九教学楼**。
+GitHub 下载包不含个人 `config.json`，也不自带已保存的地点。西十二教学楼、计算机大楼、东九教学楼的参考坐标见下方坐标说明，可按需添加。
 
 ~~免责声明~~：GPS 即定位签到，使用所选预设；预设为建筑近似坐标，精度和范围不保真，见[坐标说明](docs/usage.md#新增地点坐标2026-11-11)。
 
 ## 4. 其他功能
 
 - **只提取 ID**：双击 `get-openid`，粘贴 URL 并回车，工具显示 ID；是独立的小功能，日常启动无需运行它。
-- **命令行启动**：在项目根目录运行 `npm start`。
+- **命令行启动**：在项目根目录（包含 `package.json` 的文件夹）运行 `npm start`。
 - **修改源码后**：运行 `npm run build` 更新运行文件；`npm test` 执行离线测试。
 
 ## 项目结构
