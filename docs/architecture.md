@@ -6,7 +6,7 @@
 
 | 层次 | 目录或文件 | 职责 |
 | --- | --- | --- |
-| 系统入口 | `macos/`、`windows/` | 切换到项目根目录，再调用对应 npm 命令 |
+| 系统入口 | `01-macos/`、`02-windows/` | 切换到项目根目录，再调用对应 npm 命令 |
 | 配置管理 | `scripts/configure.cjs` | 迁移单地点配置，管理多个地点，选定本次坐标 |
 | 程序入口 | `src/index.ts` | 获取或更新登录凭据，循环查询签到，处理主动更换凭据 |
 | 终端与运行控制 | `src/terminal.ts`、`src/control.ts` | 接收直接粘贴、R/Q 命令，取消旧请求与等待，隔离旧响应 |
@@ -24,7 +24,7 @@
 ## 默认启动流程
 
 ```text
-macos/start.command 或 windows/start.cmd
+01-macos/start.command 或 02-windows/start.cmd
   → npm start
   → prestart：scripts/configure.cjs
   → 选择定位预设并写入 config.json

@@ -4,7 +4,7 @@
 
 默认启动入口已集成“从微信链接提取 openId → 接入签到 → 失效后等待新链接”。已保存西十二教学楼、计算机大楼和东九教学楼的近似中心坐标。
 
-1. macOS 双击 `macos/start.command`，Windows 双击 `windows/start.cmd`，或在项目目录执行 `npm start`。
+1. macOS 双击 `01-macos/start.command`，Windows 双击 `02-windows/start.cmd`，或在项目目录执行 `npm start`。
 2. 启动时按编号选择本次定位，回车沿用上次选择；输入 M 可管理预设，Q 退出。已保留西十二教学楼（纬度 `30.511196`、经度 `114.401579`，WGS-84）作为第一个预设。
 3. 在电脑微信「微助教服务号」中打开「学生 → 签到」，从微信页面复制带 `openid=` 参数的完整链接。将完整 URL 或裸 openId 粘贴到运行终端并按回车，程序才会提取、验证凭据并继续签到，无需运行单独的获取工具。获取方法详见 [获取微信链接](AcquireOpenID.md)；普通页面链接可能不含这个参数。
 4. 普通签到、GPS 签到会由原项目逻辑自动提交。检测到二维码签到后，终端会显示二维码，需要你使用微信扫描。脚本运行期间电脑需要保持联网和唤醒。
@@ -18,10 +18,10 @@
 
 | 用途 | macOS | Windows |
 | --- | --- | --- |
-| 集成启动 | `macos/start.command` | `windows/start.cmd` |
-| 管理地点 | `macos/manage-locations.command` | `windows/manage-locations.cmd` |
-| 单独提取 openId | `macos/get-openid.command` | `windows/get-openid.cmd` |
-| 首次安装 | `macos/setup.command` | `windows/setup.cmd` |
+| 集成启动 | `01-macos/start.command` | `02-windows/start.cmd` |
+| 管理地点 | `01-macos/manage-locations.command` | `02-windows/manage-locations.cmd` |
+| 单独提取 openId | `01-macos/get-openid.command` | `02-windows/get-openid.cmd` |
+| 首次安装 | `01-macos/setup.command` | `02-windows/setup.cmd` |
 
 Mac 通常使用 Command+V，Windows 通常使用 Ctrl+V 或右键，将链接粘贴到终端后按回车。两端使用相同的终端输入逻辑，不依赖 PowerShell 读取剪贴板。
 
@@ -29,7 +29,7 @@ Mac 通常使用 Command+V，Windows 通常使用 Ctrl+V 或右键，将链接�
 
 ## 多地点预设
 
-macOS 双击 `macos/manage-locations.command`、Windows 双击 `windows/manage-locations.cmd`，或在项目目录运行 `npm run configure`，可以新增、修改、删除地点，也可以设置默认地点。每个地点填写名称、纬度、经度；名称不能重复，至少保留一个地点。管理操作完成后立即保存，选择 0 返回。修改时直接回车保留原值。
+macOS 双击 `01-macos/manage-locations.command`、Windows 双击 `02-windows/manage-locations.cmd`，或在项目目录运行 `npm run configure`，可以新增、修改、删除地点，也可以设置默认地点。每个地点填写名称、纬度、经度；名称不能重复，至少保留一个地点。管理操作完成后立即保存，选择 0 返回。修改时直接回车保留原值。
 
 每次启动都会显示地点列表，输入编号使用对应坐标，并记住这次选择。选中的地点会同步写入 `config.json` 的 `lat`、`lon`，供当前签到进程使用。所有地点存于同一文件的 `locations`，默认地点名称存于 `selectedLocation`。
 
@@ -48,7 +48,7 @@ GPS 签到就是定位签到。程序依据微助教接口的 `isGPS` 和 `isQR`
 
 ### 只获取，不签到
 
-macOS 双击 `macos/get-openid.command`、Windows 双击 `windows/get-openid.cmd`，或运行 `npm run openid`。复制微信签到 URL 后，粘贴到工具终端并按回车。工具显示提取出的完整 openId，并注明尚未验证有效性；不写入文件、不访问网络、不签到，也不自动读写剪贴板。需要使用输出时，从终端复制 openId。
+macOS 双击 `01-macos/get-openid.command`、Windows 双击 `02-windows/get-openid.cmd`，或运行 `npm run openid`。复制微信签到 URL 后，粘贴到工具终端并按回车。工具显示提取出的完整 openId，并注明尚未验证有效性；不写入文件、不访问网络、不签到，也不自动读写剪贴板。需要使用输出时，从终端复制 openId。
 
 ### 获取范围
 

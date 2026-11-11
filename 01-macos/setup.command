@@ -8,4 +8,4 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 npm ci --ignore-scripts
 npm run build
-echo 'Setup complete. Double-click start.command in the macos folder.'
+echo 'Setup complete. Double-click start.command in the 01-macos folder.'
