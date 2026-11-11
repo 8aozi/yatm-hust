@@ -13,21 +13,12 @@ export const copyToClipBoard = (text?: string) => {
   }
 };
 
-export const pasteFromClipBoard = () => {
-  if (!config.clipboard?.paste) {
-    return '';
-  }
-  const pasteCmd = config.clipboard.paste;
-  return execSync(pasteCmd).toString();
-};
-
 export const sleep = (ms: number) =>
   new Promise((reslove) => {
     setTimeout(reslove, ms);
   });
 
-export const extractOpenId = (str: string) =>
-  str.length === 32 ? str : str.match('openid=(.*?)(?=&|$)')?.[1];
+export { extractOpenId } from './openid';
 
 export const sendNotificaition = (message: string) =>
   notify({ message, title: 'yatm' });

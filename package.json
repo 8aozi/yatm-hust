@@ -4,8 +4,13 @@
   "license": "MIT",
   "version": "1.4.1",
   "scripts": {
+    "prestart": "node scripts/configure.cjs",
     "start": "node ./dist/index.js",
-    "build": "tsc"
+    "configure": "node scripts/configure.cjs --edit",
+    "openid": "node dist/acquire-openid.js",
+    "test": "npm run build && node --test",
+    "build": "tsc",
+    "start:manual": "npm start"
   },
   "devDependencies": {
     "@types/node": "^14.10.3",

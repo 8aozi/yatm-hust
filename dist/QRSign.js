@@ -8,6 +8,7 @@ const ws_1 = __importDefault(require("ws"));
 const qrcode_1 = require("qrcode");
 const consts_1 = require("./consts");
 const utils_1 = require("./utils");
+const status_1 = require("./status");
 const debugLogger = utils_1.makeDebugLogger('QRSign::');
 var QRType;
 (function (QRType) {
@@ -25,13 +26,28 @@ class QRSign {
         this.onError = null;
         this.onSuccess = null;
         this.currentQRUrl = '';
+        this.stopped = false;
+        this.fail = (error) => {
+            if (this.stopped)
+                return;
+            this.onError?.(error);
+            this.destory();
+        };
         this.start = () => new Promise((resolve, reject) => {
             this.startSync(resolve, reject);
         });
         this.sendMessage = (msg) => {
             debugLogger(`sendMessage`, msg);
             const raw = JSON.stringify(msg ? [msg] : []);
-            this.client?.send(raw);
+            try {
+                if (this.client?.readyState === ws_1.default.OPEN)
+                    this.client.send(raw);
+                else
+                    this.fail(new status_1.AppError('temporary', '二维码连接尚未就绪或已断开。'));
+            }
+            catch (error) {
+                this.fail(error);
+            }
         };
         this.handleQRSubscription = async (message) => {
             const { data } = message;
@@ -42,10 +58,13 @@ class QRSign {
                         return;
                     }
                     this.currentQRUrl = qrUrl;
+                    status_1.status('qr', '已收到新的签到二维码，请使用微信扫描下方最新二维码或在微信打开对应链接。');
                     // TODO: should devtools conflict with printer?
                     if (this.ctx.devtools) {
                         // automation via devtools
                         const result = await this.ctx.devtools.finishQRSign(qrUrl);
+                        if (this.stopped)
+                            return;
                         // reset openId is mandatory, for scanning QR code triggering another oauth
                         this.ctx.openId = result.openId;
                         // race with QRType.result
@@ -56,7 +75,7 @@ class QRSign {
                     // manually print or execute command
                     switch (consts_1.qr.mode) {
                         case 'terminal': {
-                            qrcode_1.toString(this.currentQRUrl, { type: 'terminal' }).then(console.log);
+                            console.log(await qrcode_1.toString(this.currentQRUrl, { type: 'terminal' }));
                             break;
                         }
                         case 'copy': {
@@ -84,6 +103,8 @@ class QRSign {
             }
         };
         this.handleMessage = (data) => {
+            if (this.stopped)
+                return;
             try {
                 const messages = JSON.parse(data);
                 // heartbeat response
@@ -96,10 +117,10 @@ class QRSign {
                     // qr subscription
                     if (QRSign.testQRSubscription(message)) {
                         debugLogger(`${channel}: successful!`);
-                        this.handleQRSubscription(message);
+                        this.handleQRSubscription(message).catch(this.fail);
                     }
                     else {
-                        throw `${channel}: failed!`;
+                        throw new status_1.AppError('action', '二维码订阅被服务拒绝，无法确定是授权还是接口问题。', status_1.fallbackActions);
                     }
                 }
                 else {
@@ -127,7 +148,7 @@ class QRSign {
                 }
             }
             catch (err) {
-                console.error(`QR: ${err}`);
+                this.fail(err);
             }
         };
         this.handshake = () => this.sendMessage({
@@ -151,7 +172,15 @@ class QRSign {
             });
         };
         this.startHeartbeat = (timeout) => {
+            if (!Number.isFinite(timeout) || timeout < 1000) {
+                this.fail(new status_1.AppError('action', '二维码服务返回异常心跳参数。', status_1.fallbackActions));
+                return;
+            }
+            if (this.interval)
+                clearInterval(this.interval);
             this.sendMessage();
+            if (this.stopped)
+                return;
             this.interval = setInterval(() => {
                 this.sendMessage();
                 this.connect();
@@ -170,7 +199,8 @@ class QRSign {
     startSync(cb, err) {
         this.onError = err ?? null;
         this.onSuccess = cb ?? null;
-        this.client = new ws_1.default(QRSign.endpoint);
+        this.stopped = false;
+        this.client = new ws_1.default(QRSign.endpoint, { handshakeTimeout: 15000 });
         this.client.on('open', () => {
             this.handshake();
         });
@@ -178,11 +208,16 @@ class QRSign {
             debugLogger(`receiveMessage`, data);
             this.handleMessage(data.toString());
         });
-        this.onError && this.client.on('error', this.onError);
+        this.client.on('error', this.fail);
+        this.client.on('close', () => {
+            this.fail(new status_1.AppError('temporary', '二维码连接已断开，将重新订阅。'));
+        });
     }
     destory() {
+        this.stopped = true;
         if (this.interval) {
             clearInterval(this.interval);
+            this.interval = undefined;
         }
         this.client?.close();
     }

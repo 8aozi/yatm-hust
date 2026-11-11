@@ -5,6 +5,7 @@ import { qr } from './consts';
 import { copyToClipBoard, makeDebugLogger } from './utils';
 import { WechatDevtools } from './cdp';
 import { IContext } from './sign';
+import { AppError, fallbackActions, status } from './status';
 
 const debugLogger = makeDebugLogger('QRSign::');
 
@@ -78,6 +79,13 @@ export class QRSign {
   private onSuccess: successCallback | null = null;
   private ctx: IContext;
   private currentQRUrl = '';
+  private stopped = false;
+
+  private fail = (error: unknown) => {
+    if (this.stopped) return;
+    this.onError?.(error);
+    this.destory();
+  };
 
   static testQRSubscription = (msg: IChannelMessage): msg is IQRMessage =>
     /attendance\/\d+\/\d+\/qr/.test(msg.channel);
@@ -92,7 +100,8 @@ export class QRSign {
     this.onError = err ?? null;
     this.onSuccess = cb ?? null;
 
-    this.client = new WebSocket(QRSign.endpoint);
+    this.stopped = false;
+    this.client = new WebSocket(QRSign.endpoint, { handshakeTimeout: 15000 });
     this.client.on('open', () => {
       this.handshake();
     });
@@ -100,7 +109,10 @@ export class QRSign {
       debugLogger(`receiveMessage`, data);
       this.handleMessage(data.toString());
     });
-    this.onError && this.client.on('error', this.onError);
+    this.client.on('error', this.fail);
+    this.client.on('close', () => {
+      this.fail(new AppError('temporary', '二维码连接已断开，将重新订阅。'));
+    });
   }
 
   start = () =>
@@ -109,8 +121,10 @@ export class QRSign {
     });
 
   destory() {
+    this.stopped = true;
     if (this.interval) {
       clearInterval(this.interval);
+      this.interval = undefined;
     }
     this.client?.close();
   }
@@ -123,7 +137,12 @@ export class QRSign {
   private sendMessage = (msg?: object) => {
     debugLogger(`sendMessage`, msg);
     const raw = JSON.stringify(msg ? [msg] : []);
-    this.client?.send(raw);
+    try {
+      if (this.client?.readyState === WebSocket.OPEN) this.client.send(raw);
+      else this.fail(new AppError('temporary', '二维码连接尚未就绪或已断开。'));
+    } catch (error) {
+      this.fail(error);
+    }
   };
 
   private handleQRSubscription = async (message: IQRMessage) => {
@@ -135,10 +154,12 @@ export class QRSign {
           return;
         }
         this.currentQRUrl = qrUrl;
+        status('qr', '已收到新的签到二维码，请使用微信扫描下方最新二维码或在微信打开对应链接。');
         // TODO: should devtools conflict with printer?
         if (this.ctx.devtools) {
           // automation via devtools
           const result = await this.ctx.devtools.finishQRSign(qrUrl);
+          if (this.stopped) return;
           // reset openId is mandatory, for scanning QR code triggering another oauth
           this.ctx.openId = result.openId;
           // race with QRType.result
@@ -149,7 +170,7 @@ export class QRSign {
         // manually print or execute command
         switch (qr.mode) {
           case 'terminal': {
-            toQR(this.currentQRUrl, { type: 'terminal' }).then(console.log);
+            console.log(await toQR(this.currentQRUrl, { type: 'terminal' }));
             break;
           }
           case 'copy': {
@@ -179,6 +200,7 @@ export class QRSign {
   };
 
   private handleMessage = (data: string) => {
+    if (this.stopped) return;
     try {
       const messages = JSON.parse(data);
 
@@ -192,9 +214,9 @@ export class QRSign {
         // qr subscription
         if (QRSign.testQRSubscription(message)) {
           debugLogger(`${channel}: successful!`);
-          this.handleQRSubscription(message);
+          this.handleQRSubscription(message).catch(this.fail);
         } else {
-          throw `${channel}: failed!`;
+          throw new AppError('action', '二维码订阅被服务拒绝，无法确定是授权还是接口问题。', fallbackActions);
         }
       } else {
         debugLogger(`${channel}: successful!`);
@@ -222,7 +244,7 @@ export class QRSign {
         }
       }
     } catch (err) {
-      console.error(`QR: ${err}`);
+      this.fail(err);
     }
   };
 
@@ -250,7 +272,13 @@ export class QRSign {
   };
 
   private startHeartbeat = (timeout: number) => {
+    if (!Number.isFinite(timeout) || timeout < 1000) {
+      this.fail(new AppError('action', '二维码服务返回异常心跳参数。', fallbackActions));
+      return;
+    }
+    if (this.interval) clearInterval(this.interval);
     this.sendMessage();
+    if (this.stopped) return;
     this.interval = setInterval(() => {
       this.sendMessage();
       this.connect();

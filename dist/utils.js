@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makeDebugLogger = exports.debugLogger = exports.urlParamsToObject = exports.sendNotificaition = exports.extractOpenId = exports.sleep = exports.pasteFromClipBoard = exports.copyToClipBoard = void 0;
+exports.makeDebugLogger = exports.debugLogger = exports.urlParamsToObject = exports.sendNotificaition = exports.extractOpenId = exports.sleep = exports.copyToClipBoard = void 0;
 const child_process_1 = require("child_process");
 const node_notifier_1 = require("node-notifier");
 const consts_1 = require("./consts");
@@ -16,17 +16,11 @@ exports.copyToClipBoard = (text) => {
         throw 'wrong format for copyCmd!';
     }
 };
-exports.pasteFromClipBoard = () => {
-    if (!consts_1.config.clipboard?.paste) {
-        return '';
-    }
-    const pasteCmd = consts_1.config.clipboard.paste;
-    return child_process_1.execSync(pasteCmd).toString();
-};
 exports.sleep = (ms) => new Promise((reslove) => {
     setTimeout(reslove, ms);
 });
-exports.extractOpenId = (str) => str.length === 32 ? str : str.match('openid=(.*?)(?=&|$)')?.[1];
+var openid_1 = require("./openid");
+Object.defineProperty(exports, "extractOpenId", { enumerable: true, get: function () { return openid_1.extractOpenId; } });
 exports.sendNotificaition = (message) => node_notifier_1.notify({ message, title: 'yatm' });
 exports.urlParamsToObject = (urlParams) => Object.fromEntries(new URLSearchParams(urlParams));
 // verbose

@@ -6,6 +6,8 @@ interface IConfig {
   wait: number; // ms
   lat: number;
   lon: number;
+  selectedLocation?: string;
+  locations?: Array<{ name: string; lat: number; lon: number }>;
   ua?: string;
   clipboard?: {
     paste: string;

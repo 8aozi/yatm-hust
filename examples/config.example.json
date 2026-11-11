@@ -1,0 +1,10 @@
+{
+  "interval": 10000,
+  "wait": 5000,
+  "lat": null,
+  "lon": null,
+  "locations": [],
+  "qr": {
+    "mode": "terminal"
+  }
+}
